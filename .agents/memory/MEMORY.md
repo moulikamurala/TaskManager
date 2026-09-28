@@ -1,0 +1,2 @@
+- [Generated client browser types](generated-client-browser-types.md) — composite API client builds need DOM iterable types for generated Headers helpers.
+- [Drizzle identity columns](drizzle-identity-columns.md) — drizzle-zod may omit generated identity columns before custom insert-schema omissions.

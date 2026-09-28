@@ -1,6 +1,6 @@
-# [Project name]
+# QC Task Manager
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+QC Task Manager helps quality-control teams schedule checks, manage the work queue, and see live operational status from one dashboard.
 
 ## Run & Operate
 
@@ -22,15 +22,26 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/qc-task-manager/` — React/Vite dashboard and task queue UI
+- `artifacts/api-server/src/routes/tasks.ts` — task CRUD, dashboard summary, and system status routes
+- `lib/api-spec/openapi.yaml` — source-of-truth API contract
+- `lib/db/src/schema/tasks.ts` — source-of-truth task table schema
+- `artifacts/qc-task-manager/src/index.css` — application theme and visual tokens
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The frontend uses generated React Query hooks from the OpenAPI contract rather than hand-written API clients.
+- Scheduled tasks are persisted in PostgreSQL and use `pending` / `completed` status to represent the work queue.
+- Dashboard summaries and live system status are separate read endpoints so the UI can poll lightweight operational data.
+- Browser reminders are user-controlled: permission is requested from the notification button, while an in-app reminder remains available when browser notifications are unavailable.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Schedule quality checks with a title and date/time.
+- Edit, reschedule, complete, delete, search, and filter tasks.
+- View total, open, completed, overdue, and upcoming work.
+- Monitor API status, response time, queue depth, and the next scheduled check.
+- Receive a timed reminder when an open task becomes due.
 
 ## User preferences
 
@@ -38,7 +49,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- After changing `lib/api-spec/openapi.yaml`, run `pnpm --filter @workspace/api-spec run codegen`.
+- Use the managed API and web workflows rather than starting services with root-level dev commands.
 
 ## Pointers
 

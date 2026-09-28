@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: tasks
+    description: Scheduled task operations
+  - name: dashboard
+    description: Dashboard summaries and queue status
 paths:
   /healthz:
     get:
@@ -24,7 +28,147 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List scheduled tasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, pending, completed]
+            default: all
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a scheduled task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get one task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update or reschedule a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Task not found
+  /tasks/{id}/complete:
+    post:
+      operationId: completeTask
+      tags: [tasks]
+      summary: Mark a task complete
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Completed task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard task totals and upcoming tasks
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /system/status:
+    get:
+      operationId: getSystemStatus
+      tags: [dashboard]
+      summary: Get live API and queue status
+      responses:
+        "200":
+          description: System status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStatus"
 components:
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +177,81 @@ components:
           type: string
       required:
         - status
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, completed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, scheduledAt, status, createdAt, updatedAt]
+    TaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        scheduledAt:
+          type: string
+          format: date-time
+      required: [title, scheduledAt]
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, completed]
+      minProperties: 1
+    DashboardSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        pending:
+          type: integer
+        completed:
+          type: integer
+        overdue:
+          type: integer
+        upcoming:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+      required: [total, pending, completed, overdue, upcoming]
+    SystemStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [operational, degraded]
+        apiStatus:
+          type: integer
+        responseTimeMs:
+          type: integer
+        queueDepth:
+          type: integer
+        nextTask:
+          type: ["string", "null"]
+        checkedAt:
+          type: string
+          format: date-time
+      required: [status, apiStatus, responseTimeMs, queueDepth, nextTask, checkedAt]
 
